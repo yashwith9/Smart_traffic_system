@@ -8,10 +8,24 @@ Supports mock mode so the module can be tested without hardware.
 from __future__ import annotations
 
 import argparse
+import logging
+import os
 import random
+import sys
 import time
 from dataclasses import dataclass
 from typing import Optional
+
+# Allow running this file directly via: python integration/serial_send.py
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from config.settings import AppConfig
+from utils.logging_utils import setup_logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 try:
     import serial  # type: ignore
@@ -34,11 +48,11 @@ class SerialSender:
 
     def connect(self) -> bool:
         if self.cfg.mock:
-            print("[Serial] Mock mode enabled. No hardware connection needed.")
+            LOGGER.info("[Serial] Mock mode enabled. No hardware connection needed.")
             return True
 
         if serial is None:
-            print("[Serial] pyserial is not installed. Falling back to mock mode.")
+            LOGGER.warning("[Serial] pyserial is not installed. Falling back to mock mode.")
             self.cfg.mock = True
             return True
 
@@ -50,10 +64,10 @@ class SerialSender:
             )
             # Give MCU time to reset after opening serial.
             time.sleep(2)
-            print(f"[Serial] Connected to {self.cfg.port} @ {self.cfg.baudrate}")
+            LOGGER.info("[Serial] Connected to %s @ %s", self.cfg.port, self.cfg.baudrate)
             return True
         except Exception as exc:
-            print(f"[Serial] Connection failed: {exc}")
+            LOGGER.error("[Serial] Connection failed: %s", exc)
             return False
 
     def send_action(self, action: int) -> None:
@@ -63,7 +77,7 @@ class SerialSender:
         payload = f"{action}\n"
 
         if self.cfg.mock:
-            print(f"[Serial-Mock] Sent: {payload.strip()}")
+            LOGGER.info("[Serial-Mock] Sent: %s", payload.strip())
             return
 
         if self.ser is None:
@@ -71,33 +85,39 @@ class SerialSender:
 
         self.ser.write(payload.encode("utf-8"))
         self.ser.flush()
-        print(f"[Serial] Sent: {payload.strip()}")
+        LOGGER.info("[Serial] Sent: %s", payload.strip())
 
     def close(self) -> None:
         if self.ser is not None and self.ser.is_open:
             self.ser.close()
-            print("[Serial] Connection closed.")
+            LOGGER.info("[Serial] Connection closed.")
 
 
 def parse_args() -> argparse.Namespace:
+    env_cfg = AppConfig.from_env()
+
     parser = argparse.ArgumentParser(description="Send lane action to ESP32/Arduino over serial")
-    parser.add_argument("--port", type=str, default="COM5", help="Serial port, e.g. COM5 or /dev/ttyUSB0")
-    parser.add_argument("--baud", type=int, default=115200, help="Serial baudrate")
+    parser.add_argument("--port", type=str, default=env_cfg.serial_port, help="Serial port, e.g. COM5 or /dev/ttyUSB0")
+    parser.add_argument("--baud", type=int, default=env_cfg.serial_baud, help="Serial baudrate")
+    parser.add_argument("--timeout", type=float, default=env_cfg.serial_timeout, help="Serial timeout in seconds")
     parser.add_argument("--action", type=int, default=0, help="Action to send: 0,1,2,3")
     parser.add_argument("--repeat", type=int, default=1, help="How many times to send")
     parser.add_argument("--interval", type=float, default=1.0, help="Seconds between sends")
     parser.add_argument("--mock", action="store_true", help="Run without real serial hardware")
     parser.add_argument("--random", action="store_true", help="Send random actions instead of --action")
+    parser.add_argument("--log-level", type=str, default=env_cfg.log_level, help="Logging level (DEBUG, INFO, WARNING, ERROR)")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    setup_logging(args.log_level)
 
     sender = SerialSender(
         SerialConfig(
             port=args.port,
             baudrate=args.baud,
+            timeout=args.timeout,
             mock=args.mock,
         )
     )

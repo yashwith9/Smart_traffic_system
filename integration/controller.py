@@ -12,9 +12,10 @@ state (lane counts) -> action (lane to set GREEN)
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import sys
-from typing import List, Tuple
+from typing import List
 
 import cv2
 
@@ -24,7 +25,12 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from cv.detect import VehicleDetector, mock_lane_counts, open_capture
+from config.settings import AppConfig
 from rl.infer import InferenceConfig, TrafficSignalInference, action_to_text
+from utils.logging_utils import setup_logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class TrafficController:
@@ -35,10 +41,11 @@ class TrafficController:
 
     def load_model(self) -> bool:
         if not os.path.exists(self.model_path):
-            print(f"Model file not found: {self.model_path}")
-            print("Run training first: python rl/train_rl.py")
+            LOGGER.error("Model file not found: %s", self.model_path)
+            LOGGER.error("Run training first: python rl/train_rl.py")
             return False
         self.infer.load()
+        LOGGER.info("Model loaded from %s", self.model_path)
         return True
 
     def decide_from_state(self, lane_counts: List[int]) -> int:
@@ -46,32 +53,40 @@ class TrafficController:
         return action
 
     def run_mock(self, iterations: int = 20) -> None:
-        print("Controller running in MOCK mode...")
+        LOGGER.info("Controller running in MOCK mode...")
         for step in range(1, iterations + 1):
             state = mock_lane_counts()
             action = self.decide_from_state(state)
-            print(
-                f"[Step {step}] State={state} | "
-                f"Action={action} | Decision={action_to_text(action)}"
+            LOGGER.info(
+                "[Step %s] State=%s | Action=%s | Decision=%s",
+                step,
+                state,
+                action,
+                action_to_text(action),
             )
 
     def run_camera(self, source: str = "0", show_window: bool = True) -> None:
         cap = open_capture(source)
         if not cap.isOpened():
-            print("Could not open camera/video source.")
+            LOGGER.error("Could not open camera/video source.")
             return
 
-        print("Controller running in CAMERA mode. Press 'q' to quit.")
+        LOGGER.info("Controller running in CAMERA mode. Press 'q' to quit.")
         while True:
             ok, frame = cap.read()
             if not ok:
-                print("Stream ended or frame read failed.")
+                LOGGER.warning("Stream ended or frame read failed.")
                 break
 
             lane_counts, annotated = self.detector.detect_and_count(frame)
             action = self.decide_from_state(lane_counts)
 
-            print(f"State={lane_counts} | Action={action} | Decision={action_to_text(action)}")
+            LOGGER.info(
+                "State=%s | Action=%s | Decision=%s",
+                lane_counts,
+                action,
+                action_to_text(action),
+            )
 
             if show_window:
                 cv2.putText(
@@ -94,11 +109,13 @@ class TrafficController:
 
 
 def parse_args() -> argparse.Namespace:
+    env_cfg = AppConfig.from_env()
+
     parser = argparse.ArgumentParser(description="Connect CV lane counts to RL decision engine")
     parser.add_argument(
         "--model",
         type=str,
-        default="rl/q_table.pkl",
+        default=env_cfg.model_path,
         help="Path to trained Q-table pickle",
     )
     parser.add_argument(
@@ -123,11 +140,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Do not open display window in camera mode",
     )
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default=env_cfg.log_level,
+        help="Logging level (DEBUG, INFO, WARNING, ERROR)",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    setup_logging(args.log_level)
 
     controller = TrafficController(model_path=args.model)
     if not controller.load_model():
