@@ -1,0 +1,4 @@
+policy,avg_queue,max_queue,throughput,fairness
+rl,12.2765,58.0000,2.2742,0.9861
+longest_queue,12.2519,58.0000,2.2642,0.9860
+round_robin,13.6710,58.0000,2.2577,0.9830

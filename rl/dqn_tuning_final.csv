@@ -1,0 +1,4 @@
+seed,episodes,learning_rate,batch_size,discount_factor,epsilon_decay,hidden_size,target_update_steps,avg_queue,max_queue,throughput,fairness,beats_longest_queue_on_both,beats_round_robin_on_both,model_path,benchmark_csv
+42,1200,0.0007,128,0.98,0.996,64,250,11.2140625,60.0,2.2559375,0.9845739333618009,False,True,rl/dqn_tuned_models\dqn_tuned_seed_42.pt,rl\benchmark_dqn_tuned_seed_42.csv
+43,1200,0.0007,128,0.98,0.996,64,250,11.353333333333333,60.0,2.2559375,0.9803306068947198,False,True,rl/dqn_tuned_models\dqn_tuned_seed_43.pt,rl\benchmark_dqn_tuned_seed_43.csv
+44,1200,0.0007,128,0.98,0.996,64,250,11.15875,60.0,2.2558333333333334,0.9790714619859388,True,True,rl/dqn_tuned_models\dqn_tuned_seed_44.pt,rl\benchmark_dqn_tuned_seed_44.csv

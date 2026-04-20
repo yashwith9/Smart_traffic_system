@@ -1,0 +1,5 @@
+candidate_id,episodes,learning_rate,batch_size,discount_factor,epsilon_decay,hidden_size,target_update_steps,avg_queue,max_queue,throughput,fairness,beats_longest_queue_on_both,beats_round_robin_on_both,model_path
+1,600,0.001,128,0.97,0.995,64,250,11.240104166666667,60.0,2.2547916666666667,0.9778090312834262,False,True,rl/dqn_tuned_models\sweep_candidate_1.pt
+2,600,0.0007,128,0.98,0.996,64,250,11.170520833333333,60.0,2.256666666666667,0.9792801815374502,True,True,rl/dqn_tuned_models\sweep_candidate_2.pt
+3,600,0.0005,128,0.99,0.997,128,300,11.3696875,60.0,2.2526041666666665,0.982998562344469,False,True,rl/dqn_tuned_models\sweep_candidate_3.pt
+4,600,0.0005,64,0.99,0.997,128,300,11.321875,60.0,2.25625,0.9818137721084245,False,True,rl/dqn_tuned_models\sweep_candidate_4.pt

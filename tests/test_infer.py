@@ -35,6 +35,38 @@ class TestTrafficSignalInference(unittest.TestCase):
             action = infer.decide([3, 6, 0, 4])
             self.assertEqual(action, 1)
 
+    def test_decide_with_context_respects_valid_actions(self) -> None:
+        model_data = {
+            "q_table": {(1, 2, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0): [0.5, 9.0, 7.0, 6.0]},
+            "meta": {
+                "lane_count": 4,
+                "bucket_size": 3,
+                "age_bucket_size": 3,
+                "phase_bucket_size": 2,
+                "max_lane_count": 20,
+                "max_wait_age": 30,
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            model_path = os.path.join(tmpdir, "q_table.pkl")
+            with open(model_path, "wb") as f:
+                pickle.dump(model_data, f)
+
+            infer = TrafficSignalInference(InferenceConfig(q_table_path=model_path))
+            infer.load()
+
+            action = infer.decide_with_context(
+                raw_counts=[3, 6, 0, 4],
+                waiting_ages=[0, 0, 0, 0],
+                previous_action=0,
+                steps_since_switch=2,
+                in_yellow=False,
+                can_switch=False,
+                valid_actions=[0],
+            )
+            self.assertEqual(action, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

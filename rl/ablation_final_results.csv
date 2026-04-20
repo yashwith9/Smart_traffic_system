@@ -1,0 +1,4 @@
+candidate_id,service_capacity_per_step,arrival_min,arrival_max,min_green_steps,yellow_steps,invalid_action_penalty_weight,episodes,avg_queue,max_queue,throughput,fairness,composite_score,beats_baselines,model_path
+10.0,5.0,0.0,1.0,3.0,0.0,0.5,3500.0,13.257291666666667,60.0,2.228854166666667,0.9753160766932544,10.190222640106354,0.0,rl/ablation_models\final_candidate_10.pkl
+9.0,5.0,0.0,1.0,2.0,1.0,0.5,3500.0,14.711354166666666,60.0,2.2377083333333334,0.9795514068434907,8.859351460707297,0.0,rl/ablation_models\final_candidate_9.pkl
+3.0,4.0,0.0,1.0,3.0,1.0,0.75,3500.0,17.921875,61.0,2.2048958333333335,0.9772613184851304,5.125920273940523,0.0,rl/ablation_models\final_candidate_3.pkl
