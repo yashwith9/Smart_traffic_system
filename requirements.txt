@@ -2,3 +2,4 @@ numpy>=1.24
 opencv-python>=4.8
 pyserial>=3.5
 torch>=2.0
+ultralytics>=8.2
